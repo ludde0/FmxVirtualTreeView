@@ -1,0 +1,62 @@
+# Compiled output
+*.dcu
+*.obj
+*.o
+*.hpp
+*.exe
+*.bpl
+*.bpi
+*.dcp
+*.rsm
+*.map
+*.drc
+*.stat
+*.#00
+*.pch
+
+# ...except the package patcher. Somebody whose Delphi is not 12 needs it before
+# these packages will compile at all, so shipping only its source is circular.
+!Packages/PatchPackagesForDelphi.exe
+
+# Build folders. Unanchored on purpose: a leading slash would match only the
+# repository root, leaving Demos\TestTreeViewFmx\Win32 and its siblings tracked.
+Win32/
+Win64/
+Android/
+Android64/
+OSX64/
+OSXARM64/
+iOSDevice64/
+iOSSimARM64/
+__history/
+__recovery/
+_Backup/
+
+# IDE / user state
+*.dproj.local
+*.groupproj.local
+*.identcache
+*.dsk
+*.otares
+*.tvsconfig
+*.local
+*.deployproj
+
+# Backups
+*.~*
+*.bak
+
+# Local-only: the upstream archive this fork started from
+/Zip/
+
+# Generated resources - the ones that are real build inputs are kept. The demo
+# .res files carry the application icon and version info, and a project will not
+# build from a fresh clone without them.
+*.res
+*.rc
+!Source/*.res
+!Demos/**/*.res
+!Packages/PatchPackagesForDelphi/*.res
+!Resources/**/*.res
+!Resources/**/*.rc
+!Packages/*.rc

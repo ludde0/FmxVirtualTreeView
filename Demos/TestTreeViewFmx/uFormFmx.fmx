@@ -1,0 +1,356 @@
+object FormFmx: TFormFmx
+  Left = 0
+  Top = 0
+  Caption = ' Virtual TreeView Demo FMX'
+  ClientHeight = 476
+  ClientWidth = 327
+  Padding.Left = 4.000000000000000000
+  Padding.Top = 4.000000000000000000
+  Padding.Right = 4.000000000000000000
+  Padding.Bottom = 4.000000000000000000
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop, iPhone, iPad]
+  OnCreate = FormCreate
+  OnResize = FormResize
+  OnShow = FormShow
+  DesignerMasterStyle = 0
+  object Layout_Top: TLayout
+    Align = Top
+    Margins.Bottom = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 4.000000000000000000
+    Size.Width = 319.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object Label_Title: TLabel
+      Align = Left
+      StyledSettings = [Family, Style, FontColor]
+      Margins.Left = 10.000000000000000000
+      Position.X = 10.000000000000000000
+      Size.Width = 130.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Virtual TreeView FMX'
+    end
+    object Label_Filter: TLabel
+      Align = Left
+      StyledSettings = [Family, Style, FontColor]
+      Margins.Left = 10.000000000000000000
+      Position.X = 150.000000000000000000
+      Size.Width = 39.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Filter'
+      TabOrder = 0
+    end
+    object Rectangle_Filter: TRectangle
+      Align = Client
+      Fill.Color = claWhite
+      Margins.Right = 10.000000000000000000
+      Size.Width = 120.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      object Edit_Filter: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        Align = Client
+        TabOrder = 1
+        Size.Width = 120.000000000000000000
+        Size.Height = 24.000000000000000000
+        Size.PlatformDefault = False
+        OnTyping = Edit_FilterTyping
+      end
+    end
+  end
+  object Layout_Bottom: TLayout
+    Align = MostBottom
+    Position.X = 4.000000000000000000
+    Position.Y = 448.000000000000000000
+    Size.Width = 319.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    object Label_Status: TLabel
+      Align = Client
+      Margins.Left = 8.000000000000000000
+      Size.Width = 311.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+    end
+  end
+  object Layout_Main: TLayout
+    Align = Client
+    Size.Width = 319.000000000000000000
+    Size.Height = 416.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object Layout_Controls: TLayout
+      Align = Bottom
+      Anchors = []
+      Margins.Top = 4.000000000000000000
+      Position.Y = 290.000000000000000000
+      Size.Width = 319.000000000000000000
+      Size.Height = 126.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      object Layout_AddNodes: TLayout
+        Align = Top
+        Margins.Top = 5.000000000000000000
+        Position.Y = 62.000000000000000000
+        Size.Width = 319.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        object Button_AddNodesToRoot: TButton
+          Align = Left
+          Margins.Left = 8.000000000000000000
+          Position.X = 79.000000000000000000
+          Size.Width = 74.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          Text = 'To Root'
+          TextSettings.Trimming = None
+          OnClick = Button_AddNodesClick
+        end
+        object Label_AddNodes: TLabel
+          Align = Left
+          Size.Width = 71.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.WordWrap = False
+          Text = 'Add Nodes'
+          TabOrder = 0
+        end
+        object Button_AddNodesAsChildren: TButton
+          Tag = 1
+          Align = Left
+          Margins.Left = 8.000000000000000000
+          Position.X = 161.000000000000000000
+          Size.Width = 74.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          Text = 'As children'
+          TextSettings.Trimming = None
+          OnClick = Button_AddNodesClick
+        end
+        object Edit_NodeCount: TEdit
+          Touch.InteractiveGestures = [LongTap, DoubleTap]
+          Align = Left
+          TabOrder = 3
+          Text = '3000'
+          Position.X = 243.000000000000000000
+          Margins.Left = 8.000000000000000000
+          Size.Width = 59.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+        end
+      end
+      object Layout_ClearTree: TLayout
+        Align = Top
+        Margins.Top = 5.000000000000000000
+        Position.Y = 93.000000000000000000
+        Size.Width = 319.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        object Button_ClearTree: TButton
+          Align = Left
+          Size.Width = 74.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          Text = 'Clear Tree'
+          TextSettings.Trimming = None
+          OnClick = Button_ClearTreeClick
+        end
+        object Button_Test: TButton
+          Align = Left
+          Margins.Left = 5.000000000000000000
+          Position.X = 79.000000000000000000
+          Size.Width = 74.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          Text = 'Test'
+          TextSettings.Trimming = None
+          OnClick = Button_TestClick
+        end
+        object Button_Close: TButton
+          Align = Left
+          Margins.Left = 5.000000000000000000
+          Position.X = 158.000000000000000000
+          Size.Width = 74.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          Text = 'Close'
+          TextSettings.Trimming = None
+          OnClick = Button_CloseClick
+        end
+      end
+      object Layout_Drag: TLayout
+        Align = Top
+        Margins.Top = 5.000000000000000000
+        Position.Y = 31.000000000000000000
+        Size.Width = 319.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        object Label_LongPress: TLabel
+          Align = Left
+          Size.Width = 75.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.WordWrap = False
+          Text = 'Long press'
+          TabOrder = 0
+        end
+        object ComboBox_LongPress: TComboBox
+          Align = Left
+          Margins.Left = 4.000000000000000000
+          Position.X = 79.000000000000000000
+          Size.Width = 117.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          OnChange = ComboBox_LongPressChange
+        end
+        object CheckBox_MultiLine: TCheckBox
+          Align = Left
+          Margins.Left = 8.000000000000000000
+          Position.X = 204.000000000000000000
+          Size.Width = 86.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          Text = 'Multi Line'
+          OnChange = CheckBox_MultiLineChange
+        end
+      end
+      object Layout_Draw: TLayout
+        Align = Top
+        Size.Width = 319.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        object CheckBox_CustomDraw: TCheckBox
+          Align = Left
+          Size.Width = 113.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          Text = 'Custom Draw'
+          OnChange = CheckBox_CustomDrawChange
+        end
+        object CheckBox_DrawTree: TCheckBox
+          Align = Left
+          Position.X = 113.000000000000000000
+          Size.Width = 92.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          Text = 'DrawTree'
+          OnChange = CheckBox_DrawTreeChange
+        end
+        object CheckBox_MultiSelect: TCheckBox
+          Align = Left
+          Position.X = 205.000000000000000000
+          Size.Width = 92.000000000000000000
+          Size.Height = 26.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          Text = 'Multi Select'
+          OnChange = CheckBox_MultiSelectChange
+        end
+      end
+    end
+    object Layout_Tree: TLayout
+      Align = Client
+      Size.Width = 319.000000000000000000
+      Size.Height = 286.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+    end
+  end
+  object ImageList_Tree: TImageList
+    Source = <
+      item
+        MultiResBitmap = <
+          item
+            Width = 16
+            Height = 16
+            PNG = {
+              89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+              610000000473424954080808087C0864880000004249444154388D6360A01030
+              3230303030E46DFC8F5576923F41791618DBDED30F45EEE0F64D287C5CF24CA4
+              38171B183560D480C161003C2FA0A77D7440489E6C0000A2011074D5746BA100
+              00000049454E44AE426082}
+            FileName = 
+              'Q:\Ludde\Delphi\FmxVirtualTreeView\Demos\TestTreeViewFmx\Images\' +
+              'PauseBlue16.ico'
+          end>
+        Name = 'Pause'
+      end
+      item
+        MultiResBitmap = <
+          item
+            Width = 16
+            Height = 16
+            PNG = {
+              89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+              610000000473424954080808087C086488000000B049444154388DA5933B0E82
+              401445CF1B314C6DED0EEC688C5AD0F9696427BA0D6B76823BA0B4613D2446C6
+              82C060446726DCEA7D724FEE64F260A204804B61FA499E49084075457A3AC362
+              D9C2864087A26193AE1320A17C543695235134360C018D0242407F013E202FC0
+              10646485989892C29067A2DC3600FB29DB43CCE668379E09A437DDAEF7B6F07D
+              C22FA33381CBF80568548D6AB4B7F103A0C4B0DBEB2063A7FE98F4EC49FD9A07
+              1FD364BD01105E42B31BCE17640000000049454E44AE426082}
+            FileName = 
+              'Q:\Ludde\Delphi\FmxVirtualTreeView\Demos\TestTreeViewFmx\Images\' +
+              'PlayBlue16.ico'
+          end>
+        Name = 'Play'
+      end
+      item
+        MultiResBitmap = <
+          item
+            Width = 16
+            Height = 16
+            PNG = {
+              89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+              610000000473424954080808087C0864880000004749444154388D6360A01030
+              32303030B45556FEAFFA6A419ACE49FE8C700318F236FEB7F7F42349BFA50703
+              43072323231369D662825103460D181C06B0C018961E941A45260000114D099E
+              C981973E0000000049454E44AE426082}
+            FileName = 
+              'Q:\Ludde\Delphi\FmxVirtualTreeView\Demos\TestTreeViewFmx\Images\' +
+              'StopBlue16.ico'
+          end>
+        Name = 'Stop'
+      end>
+    Destination = <
+      item
+        Layers = <
+          item
+            Name = 'Pause'
+          end>
+      end
+      item
+        Layers = <
+          item
+            Name = 'Play'
+          end>
+      end
+      item
+        Layers = <
+          item
+            Name = 'Stop'
+          end>
+      end>
+    Left = 57
+    Top = 95
+  end
+end

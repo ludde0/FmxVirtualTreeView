@@ -1,0 +1,48 @@
+FmxVirtualTreeView - licence
+============================
+
+Virtual Treeview is published under a double licence, and this fork keeps it
+unchanged. You may use this code under either of:
+
+  Mozilla Public License, version 1.1
+      http://www.mozilla.org/MPL/
+      https://www.mozilla.org/en-US/MPL/1.1/
+
+  GNU Lesser General Public License, version 2.1, with the static linking
+  exception described at
+      http://wiki.freepascal.org/modified_LGPL
+      https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+
+
+The authoritative text is the licence header carried by every unit in Source:
+
+    The contents of this file are subject to the Mozilla Public License
+    Version 1.1 (the "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+    http://www.mozilla.org/MPL/
+
+    Alternatively, you may redistribute this library, use and/or modify it under
+    the terms of the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 2.1 of the License, or (at your option)
+    any later version. You may obtain a copy of the LGPL at
+    http://www.gnu.org/copyleft/.
+
+    Software distributed under the License is distributed on an "AS IS" basis,
+    WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+    the specific language governing rights and limitations under the License.
+
+    The original code is VirtualTrees.pas, released September 30, 2000.
+
+    The initial developer of the original code is digital publishing AG
+    (Munich, Germany, www.digitalpublishing.de), most code was written by
+    Mike Lischke 2000-2009 (public@soft-gems.net, www.soft-gems.net)
+
+    Portions created by digital publishing AG are Copyright
+    (C) 1999-2001 digital publishing AG. All Rights Reserved.
+
+
+Files in Source have been modified relative to the original release. The history
+of this repository records what was changed here.
+
+The credits in README.md name the people whose work this is built on. Nothing in
+this fork changes their copyright.

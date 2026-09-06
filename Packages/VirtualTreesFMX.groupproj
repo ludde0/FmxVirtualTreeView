@@ -1,0 +1,48 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{AF6D010A-9568-478B-95F8-87E956210308}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="VirtualTreesFMX_Runtime.dproj">
+            <Dependencies></Dependencies>
+        </Projects>
+        <Projects Include="VirtualTreesFMX_Design.dproj">
+            <Dependencies>VirtualTreesFMX_Runtime.dproj</Dependencies>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="VirtualTreesFMX_Runtime">
+        <MSBuild Projects="VirtualTreesFMX_Runtime.dproj"/>
+    </Target>
+    <Target Name="VirtualTreesFMX_Runtime:Clean">
+        <MSBuild Projects="VirtualTreesFMX_Runtime.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualTreesFMX_Runtime:Make">
+        <MSBuild Projects="VirtualTreesFMX_Runtime.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="VirtualTreesFMX_Design" DependsOnTargets="VirtualTreesFMX_Runtime">
+        <MSBuild Projects="VirtualTreesFMX_Design.dproj"/>
+    </Target>
+    <Target Name="VirtualTreesFMX_Design:Clean" DependsOnTargets="VirtualTreesFMX_Runtime:Clean">
+        <MSBuild Projects="VirtualTreesFMX_Design.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualTreesFMX_Design:Make" DependsOnTargets="VirtualTreesFMX_Runtime:Make">
+        <MSBuild Projects="VirtualTreesFMX_Design.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="VirtualTreesFMX_Runtime;VirtualTreesFMX_Design"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="VirtualTreesFMX_Runtime:Clean;VirtualTreesFMX_Design:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="VirtualTreesFMX_Runtime:Make;VirtualTreesFMX_Design:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

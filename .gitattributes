@@ -1,0 +1,10 @@
+# Git must not rewrite anything in this repository.
+#
+# The source files are CRLF with a byte order mark, and they are compared with a diff tool
+# that is set up for exactly that. Line ending conversion on checkout or commit would show
+# every file as changed on somebody else's machine, and .res, .dcr, .ico, .bmp and .cur are
+# binary besides.
+#
+# -text on everything switches the conversion off, both directions, for every file.
+
+* -text

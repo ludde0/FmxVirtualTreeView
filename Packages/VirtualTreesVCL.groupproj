@@ -1,0 +1,48 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{797392EF-203F-492C-9781-1E1F84DAB823}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="VirtualTreesVCL_Runtime.dproj">
+            <Dependencies></Dependencies>
+        </Projects>
+        <Projects Include="VirtualTreesVCL_Design.dproj">
+            <Dependencies>VirtualTreesVCL_Runtime.dproj</Dependencies>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="VirtualTreesVCL_Runtime">
+        <MSBuild Projects="VirtualTreesVCL_Runtime.dproj"/>
+    </Target>
+    <Target Name="VirtualTreesVCL_Runtime:Clean">
+        <MSBuild Projects="VirtualTreesVCL_Runtime.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualTreesVCL_Runtime:Make">
+        <MSBuild Projects="VirtualTreesVCL_Runtime.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="VirtualTreesVCL_Design" DependsOnTargets="VirtualTreesVCL_Runtime">
+        <MSBuild Projects="VirtualTreesVCL_Design.dproj"/>
+    </Target>
+    <Target Name="VirtualTreesVCL_Design:Clean" DependsOnTargets="VirtualTreesVCL_Runtime:Clean">
+        <MSBuild Projects="VirtualTreesVCL_Design.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualTreesVCL_Design:Make" DependsOnTargets="VirtualTreesVCL_Runtime:Make">
+        <MSBuild Projects="VirtualTreesVCL_Design.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="VirtualTreesVCL_Runtime;VirtualTreesVCL_Design"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="VirtualTreesVCL_Runtime:Clean;VirtualTreesVCL_Design:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="VirtualTreesVCL_Runtime:Make;VirtualTreesVCL_Design:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
