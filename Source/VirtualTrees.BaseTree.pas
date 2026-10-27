@@ -14496,8 +14496,10 @@ var
 begin
   R := TRect.Create(Min(Left, Right), Top, Max(Left, Right) + 1, Top + 1);
 {$IFDEF VT_FMX}
-  PaintInfo.Canvas.Fill.Color := FColors.BackGroundColor;
-  PaintInfo.Canvas.FillRect(R, 0, 0, [], 1.0, DottedBrushGridLines);
+  // A solid line in GridLineColor, as the VCL draws a solid (themed) line.
+  PaintInfo.Canvas.Fill.Kind := TBrushKind.Solid;
+  PaintInfo.Canvas.Fill.Color := FColors.GridLineColor;
+  PaintInfo.Canvas.FillRect(R, 0, 0, [], 1.0);
 {$ELSE}
   StyleServices.DrawElement(PaintInfo.Canvas.Handle, StyleServices.GetElementDetails(tlGroupHeaderLineOpenSelectedNotFocused), R, @R, CurrentPPI);
 {$ENDIF}
@@ -14513,8 +14515,14 @@ var
 begin
   R := TRect.Create(Left, Min(Top, Bottom), Left + 1, Max(Top, Bottom) + 1);
 {$IFDEF VT_FMX}
-  PaintInfo.Canvas.Brush.Color := FColors.TreeLineColor;
-  PaintInfo.Canvas.FillRect(R, 0, 0, [], 1.0, DottedBrushGridLines);
+  // A solid line in GridLineColor. Like the VCL, the line of a fixed column differs from the
+  // normal grid lines when vertical grid lines are shown (TreeLineColor here).
+  PaintInfo.Canvas.Fill.Kind := TBrushKind.Solid;
+  if pFixedColumn and (TVtPaintOption.toShowVertGridLines in TreeOptions.PaintOptions) then
+    PaintInfo.Canvas.Fill.Color := FColors.TreeLineColor
+  else
+    PaintInfo.Canvas.Fill.Color := FColors.GridLineColor;
+  PaintInfo.Canvas.FillRect(R, 0, 0, [], 1.0);
 {$ELSE}
   if pFixedColumn and (TVtPaintOption.toShowVertGridLines in TreeOptions.PaintOptions) then // In case we showe grid lines, we must use a color for the fixed column that differentiates from the normal gridlines
     StyleServices.DrawElement(PaintInfo.Canvas.Handle, StyleServices.GetElementDetails(tlGroupHeaderLineOpenHot), R, @R, CurrentPPI)
@@ -23933,6 +23941,109 @@ begin
   end;
 end;
 
+{$IFDEF VT_VCL}
+//----------------------------------------------------------------------------------------------------------------------
+
+type
+  // A node height measurement that the worker thread hands over to the main thread, which is the
+  // only thread allowed to call OnMeasureItem.
+  //
+  // The worker waits for the measurement, but gives it up when the main thread stops the validation
+  // (tsStopValidation) before the measurement has started. The main thread then waits for the worker
+  // in TWorkerThread.WaitForValidationTermination, and the CheckSynchronize it calls there can not
+  // always run the measurement: when the main thread is itself inside CheckSynchronize (running a
+  // queued or synchronized call that ends a tree update), the outer CheckSynchronize may already have
+  // taken the measurement from the queue, and a nested CheckSynchronize never sees it. Waiting with
+  // TThread.Synchronize then deadlocks both threads.
+  //
+  // A request that has been given up does nothing when it runs later, so it does not touch the tree
+  // or the node, which may be gone by then.
+  IVTMeasureRequest = interface
+    function Start: Boolean;
+    procedure Finish;
+    function Wait(const Tree: TBaseVirtualTree): Boolean;
+  end;
+
+  TVTMeasureRequestState = (mrsWaiting, mrsRunning, mrsDone, mrsCancelled);
+
+  TVTMeasureRequest = class(TInterfacedObject, IVTMeasureRequest)
+  private
+    FLock: TCriticalSection;
+    FDone: TEvent;
+    FState: TVTMeasureRequestState;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    // Main thread: True when the measurement is to be done, False when it has been given up.
+    function Start: Boolean;
+    // Main thread: the measurement is done.
+    procedure Finish;
+    // Worker thread: True when the measurement is done, False when it has been given up.
+    function Wait(const Tree: TBaseVirtualTree): Boolean;
+  end;
+
+constructor TVTMeasureRequest.Create;
+begin
+  inherited Create;
+  FLock := TCriticalSection.Create;
+  FDone := TEvent.Create(nil, True, False, '');
+  FState := mrsWaiting;
+end;
+
+destructor TVTMeasureRequest.Destroy;
+begin
+  FDone.Free;
+  FLock.Free;
+  inherited;
+end;
+
+function TVTMeasureRequest.Start: Boolean;
+begin
+  FLock.Enter;
+  try
+    Result := FState = mrsWaiting;
+    if Result then
+      FState := mrsRunning;
+  finally
+    FLock.Leave;
+  end;
+end;
+
+procedure TVTMeasureRequest.Finish;
+begin
+  FLock.Enter;
+  try
+    FState := mrsDone;
+  finally
+    FLock.Leave;
+  end;
+  FDone.SetEvent;
+end;
+
+function TVTMeasureRequest.Wait(const Tree: TBaseVirtualTree): Boolean;
+begin
+  repeat
+    if FDone.WaitFor(10) = wrSignaled then
+      Exit(True);
+    if tsStopValidation in Tree.TreeStates then
+    begin
+      FLock.Enter;
+      try
+        // A measurement that runs in the main thread right now is waited for.
+        if FState = mrsWaiting then
+        begin
+          FState := mrsCancelled;
+          Exit(False);
+        end;
+      finally
+        FLock.Leave;
+      end;
+    end;
+  until False;
+end;
+
+{$ENDIF}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 procedure TBaseVirtualTree.MeasureItemHeight(const Canvas: TCanvas; Node: PVirtualNode);
@@ -23941,6 +24052,9 @@ procedure TBaseVirtualTree.MeasureItemHeight(const Canvas: TCanvas; Node: PVirtu
 
 var
   NewNodeHeight: TDimension;
+{$IFDEF VT_VCL}
+  Request: IVTMeasureRequest;
+{$ENDIF}
 
 begin
 {$IFDEF VT_FMX}
@@ -23963,16 +24077,31 @@ begin
 {$IFDEF VT_VCL}
       if (MainThreadId <> GetCurrentThreadId) then
         begin
+        // The worker thread hands the measurement over to the main thread (see TVTMeasureRequest).
+        // When the validation is stopped before the main thread has measured the node, the node
+        // stays unmeasured and is measured by the main thread later. FPendingSyncProcs is then
+        // decremented here, since the given up request does not touch the tree.
         AtomicIncrement(FPendingSyncProcs);
-        TThread.Synchronize(nil,
+        Request := TVTMeasureRequest.Create;
+        TThread.Queue(nil,
           procedure
           begin
-            //swish:Decrement invoke refs
-            AtomicDecrement(FPendingSyncProcs);
-            DoMeasureItem(Canvas, Node, NewNodeHeight);
-            SetNodeHeight(Node, NewNodeHeight);
+            if Request.Start then
+            try
+              //swish:Decrement invoke refs
+              AtomicDecrement(FPendingSyncProcs);
+              DoMeasureItem(Canvas, Node, NewNodeHeight);
+              SetNodeHeight(Node, NewNodeHeight);
+            finally
+              Request.Finish;
+            end;
           end
-        )
+        );
+        if not Request.Wait(Self) then
+        begin
+          AtomicDecrement(FPendingSyncProcs);
+          Exclude(Node.States, vsHeightMeasured);
+        end;
         end
       else
       begin
@@ -24233,7 +24362,6 @@ var
   CellIsInLastColumn: Boolean;
   ColumnIsFixed: Boolean;
 {$IFDEF VT_FMX}
-  WasDecContent: Integer;      // cell/content rect: trimmed once per row
   tmpR: TRect;
 {$ENDIF}
 begin
@@ -24348,9 +24476,6 @@ begin
           // ----- main node paint loop
           while Assigned(PaintInfo.Node) do
           begin
-{$IFDEF VT_FMX}
-            WasDecContent := 0;
-{$ENDIF}
             // Determine LineImage, SelectionLevel and IndentSize
             SelectLevel := DetermineLineImageAndSelectLevel(PaintInfo.Node, LineImage);
             IndentSize := Length(LineImage);
@@ -24406,11 +24531,9 @@ begin
               CurrentNodeHeight := PaintInfo.Node.NodeHeight;
 {$ENDIF}
 {$IFDEF VT_FMX}
+              // The full row, like the VCL. Room for a horizontal grid line is taken from the
+              // cell rect in the column loop, per column.
               R := TargetRect;
-              // Once per row: this is outside the column loop, unlike the matching trim of
-              // CellRect and ContentRect further down.
-              if (poGridLines in PaintOptions) and (toShowHorzGridLines in TreeOptions.PaintOptions) then
-                R.Bottom := R.Bottom - 1;
 {$ELSE}
               R.Bottom := CurrentNodeHeight;
 {$ENDIF}
@@ -24573,18 +24696,11 @@ begin
                                   else
                                     DrawGridHLine(PaintInfo, CellRect.Left, CellRect.Right, CellRect.Bottom - 1);
 {$IFDEF VT_FMX}
-                                  // Once per row, but this runs per column, hence the flag.
-                                  // It used to share a counter with the background rect above,
-                                  // which is outside the column loop and always consumed the
-                                  // count first - so the grid line stayed INSIDE the content
-                                  // rect, DT_VCENTER centred the text half a line low and
-                                  // descenders were drawn on the separator.
-                                  if WasDecContent=0 then
-                                    begin
-                                      CellRect.Bottom := CellRect.Bottom  - 1;
-                                      ContentRect.Bottom := ContentRect.Bottom - 1;
-                                    end;
-                                  System.inc(WasDecContent);
+                                  // Every column starts from the full row height (see the column
+                                  // advance below), so the line lands on the row's last pixel in all
+                                  // columns and the content stays above it.
+                                  CellRect.Bottom := CellRect.Bottom - 1;
+                                  ContentRect.Bottom := ContentRect.Bottom - 1;
 {$ELSE}
                                   Dec(CellRect.Bottom);
                                   Dec(ContentRect.Bottom);
@@ -24716,6 +24832,9 @@ begin
                         CellRect.Left:= CellRect.Right;
                         TVirtualTreeColumnCracker(Items[NextColumn]).GetAbsoluteBounds(tmpR.Left, tmpR.Right);
                         CellRect.Right:= CellRect.Left + tmpR.Width;
+                        // Undo the previous column's grid line trim, like the VCL branch does.
+                        CellRect.Bottom := R.Bottom;
+                        ContentRect.Bottom := R.Bottom;
 {$ELSE}
                         TVirtualTreeColumnCracker(Items[NextColumn]).GetAbsoluteBounds(CellRect.Left, CellRect.Right);
                         CellRect.Bottom := Node.NodeHeight;

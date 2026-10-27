@@ -26,7 +26,7 @@ package VirtualTreesFMX_Runtime;
 {$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
 {$DESCRIPTION 'Virtual TreeView runtime (FireMonkey)'}
-{$LIBSUFFIX '290'}
+{$LIBSUFFIX '370'}
 {$I DelphiVersion.inc}
 {$RUNONLY}
 {$IMPLICITBUILD OFF}

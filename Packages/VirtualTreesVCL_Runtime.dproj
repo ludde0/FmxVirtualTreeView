@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{74C4F503-19D3-4763-B984-797D7AC6CAA9}</ProjectGuid>
         <MainSource>VirtualTreesVCL_Runtime.dpk</MainSource>
-        <ProjectVersion>20.1</ProjectVersion>
+        <ProjectVersion>20.3</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
@@ -47,7 +47,7 @@
         <DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
         <DCC_UnitSearchPath>..\Source;.\$(Platform)\$(Config);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-        <DllSuffix>290</DllSuffix>
+        <DllSuffix>370</DllSuffix>
         <GenDll>true</GenDll>
         <GenPackage>true</GenPackage>
         <DCC_E>false</DCC_E>

@@ -77,7 +77,6 @@ type
     procedure CreatePopup;
     procedure CreateStringTree;
     function  GetActiveTree: TBaseVirtualTree;
-    procedure HideOddRootNodes(ATree: TBaseVirtualTree);
     procedure PopupItemClick(Sender: TObject);
     procedure SetStatus(const AText: string);
     procedure VTAfterPaste(Sender: TObject; const APasted: TNodeArray; ACut: Boolean);
@@ -532,7 +531,6 @@ begin
       finally
         LTree.EndUpdate;
       end;
-      HideOddRootNodes(LTree);
     end;
     1: begin // add as child
       if Assigned(LTree.FocusedNode) then begin
@@ -978,28 +976,6 @@ begin
     Result := FDrawTree;
   end else begin
     Result := FStringTree;
-  end;
-end;
-
-procedure TFormFmx.HideOddRootNodes(ATree: TBaseVirtualTree);
-var
-  Node: PVirtualNode;
-  C: Integer;
-begin
-  // Demo of IsVisible: hide every second ROOT node. Note GetNextSibling, not GetNext -
-  // GetNext would descend into children and the parity would follow the traversal order
-  // rather than the root index.
-  ATree.BeginUpdate;
-  try
-    C := 0;
-    Node := ATree.GetFirstChild(nil);
-    while Assigned(Node) do begin
-      ATree.IsVisible[Node] := (C mod 2) = 0;
-      Node := ATree.GetNextSibling(Node);
-      C := C + 1;
-    end;
-  finally
-    ATree.EndUpdate;
   end;
 end;
 

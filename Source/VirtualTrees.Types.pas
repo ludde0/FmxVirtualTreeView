@@ -164,7 +164,7 @@ type
   TVTBrush = HBRUSH;
   TCanvas = Vcl.Graphics.TCanvas;
 {$ENDIF}
-  TColumnIndex = type Integer;
+  TColumnIndex = {$if CompilerVersion < 36} type {$ifend} Integer; // See issue #1276
   TColumnPosition = type Cardinal;
   PCardinal = ^Cardinal;
 

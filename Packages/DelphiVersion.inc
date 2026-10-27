@@ -6,7 +6,7 @@
 //
 // A suffix that does not belong to the compiler building it fails nowhere useful: the packages
 // compile, and the design package then asks the IDE for a runtime BPL under a name that was
-// never built - "Can't load package ...290.bpl", which says nothing about why. The test below
+// never built - "Can't load package ...370.bpl", which says nothing about why. The test below
 // catches both halves of that: a RAD Studio nobody has built these with, and a RAD Studio that
 // is fine but carrying a suffix meant for a different one.
 //
@@ -21,14 +21,16 @@
 // under 256 characters.
 //
 // To add a RAD Studio by hand: build the packages with it, then add one line to the list below.
-// Delphi 12 is VER360, and each release numbers ten higher than the one before it.
+// Delphi 12 is VER360 and Delphi 13 is VER370; each release numbers ten higher than the one
+// before it.
 
-{$DEFINE VT_SUFFIX_290}
+{$DEFINE VT_SUFFIX_370}
 
 {$DEFINE VT_WRONG_DELPHI}
 
 // One line per RAD Studio, pairing it with the library suffix that belongs to it.
 {$IFDEF VER360}{$IFDEF VT_SUFFIX_290}{$UNDEF VT_WRONG_DELPHI}{$ENDIF}{$ENDIF}   // RAD Studio 12
+{$IFDEF VER370}{$IFDEF VT_SUFFIX_370}{$UNDEF VT_WRONG_DELPHI}{$ENDIF}{$ENDIF}   // RAD Studio 13
 
 {$IFDEF VT_WRONG_DELPHI}
   {$MESSAGE FATAL 'The library suffix these packages carry does not belong to the RAD Studio building them. Run PatchPackagesForDelphi.exe in the Packages folder, then read README FIRST - OTHER DELPHI VERSIONS.txt'}

@@ -27,12 +27,12 @@ them here:
 The design package is the one that gets installed into the IDE; it requires
 the runtime package, so the runtime package must be built first.
 
-Only RAD Studio 12 is supported, so the projects are written for it directly
-rather than kept in a per-version folder. Anyone needing an older Delphi can
-build their own packages from the units in Source.
+The projects are written for RAD Studio 13 directly rather than kept in a
+per-version folder. RAD Studio 12, or another version, is one run of
+PatchPackagesForDelphi away - see below.
 
-The library suffix is pinned to 290, the RAD Studio 12 package version, so
-what gets built is VirtualTreesVCL_Runtime290.bpl and so on.
+The library suffix is pinned to 370, the RAD Studio 13 package version, so
+what gets built is VirtualTreesVCL_Runtime370.bpl and so on.
 
 It is written out rather than left as {$LIBSUFFIX AUTO} on purpose. With AUTO,
 the design package records its dependency on the runtime package as the literal
@@ -47,7 +47,7 @@ files. Two things are here so that nobody has to discover this the hard way:
                       under a RAD Studio the packages have not been set for, and
                       says what to do instead. A wrong suffix otherwise produces
                       no error until the design package is installed, and then
-                      only "Can't load package ...290.bpl".
+                      only "Can't load package ...370.bpl".
 
   README FIRST - OTHER DELPHI VERSIONS.txt
                       The whole procedure, for someone who has just hit that
@@ -59,7 +59,8 @@ PatchPackagesForDelphi
 
 A one-window utility that reads the suffix out of every .dpk and .dproj in this
 folder and writes a new one into all of them at once, so the eight cannot end up
-disagreeing with each other.
+disagreeing with each other. It is how these packages are moved to a Delphi
+other than 13 - RAD Studio 12, for example, takes suffix 290.
 
   Detect installed   asks the registry which RAD Studio versions are installed
                      and reads the suffix out of the rtl<nnn>.bpl in each one's
@@ -70,7 +71,7 @@ disagreeing with each other.
                      _Backup first.
 
 The built .exe is kept in this folder and committed to the repository - somebody
-whose Delphi is not 12 needs it before these packages will compile at all. To
+whose Delphi is not 13 needs it before these packages will compile at all. To
 rebuild it, open PatchPackagesForDelphi\PatchPackagesForDelphi.dpr; the IDE
 writes the .dproj on first save. Point the output directory at "..", so the .exe
 lands beside the packages it patches.
@@ -81,7 +82,8 @@ patching: an open project will write its own copy back over the change.
 
 Patch also brings DelphiVersion.inc in step: it writes the suffix there as a
 symbol, and adds a line pairing this RAD Studio with it, working the version
-symbol out from the suffix - 290 belongs to VER360, 280 to VER350. Version lines
+symbol out from the suffix - 370 belongs to VER370, 290 to VER360 and 280 to
+VER350 (RAD Studio 13 brought the two numbers into line). Version lines
 are added rather than replaced, so a folder that has been built with several RAD
 Studios goes on accepting all of them.
 
@@ -175,8 +177,10 @@ Uninstalling
 4. Optionally delete the built .bpl and .dcp files. The IDE writes them to
    the public BPL folder, normally:
 
-       C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl
-       C:\Users\Public\Documents\Embarcadero\Studio\23.0\Dcp
+       C:\Users\Public\Documents\Embarcadero\Studio\37.0\Bpl
+       C:\Users\Public\Documents\Embarcadero\Studio\37.0\Dcp
+
+   (37.0 is RAD Studio 13; RAD Studio 12 uses 23.0.)
 
 5. Remove the Source folder from the Library path if you no longer want it
    there.
@@ -274,7 +278,8 @@ change an icon or add one for a new component.
        "%BDS%\bin\brcc32.exe" -foVirtualTrees.res VirtualTrees.rc
 
    If %BDS% is not set, the path is normally
-   C:\Program Files (x86)\Embarcadero\Studio\23.0\bin\brcc32.exe
+   C:\Program Files (x86)\Embarcadero\Studio\37.0\bin\brcc32.exe
+   (23.0 instead of 37.0 for RAD Studio 12)
 
 4. Rename the result:
 

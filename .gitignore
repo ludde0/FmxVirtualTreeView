@@ -14,7 +14,7 @@
 *.#00
 *.pch
 
-# ...except the package patcher. Somebody whose Delphi is not 12 needs it before
+# ...except the package patcher. Somebody whose Delphi is not 13 needs it before
 # these packages will compile at all, so shipping only its source is circular.
 !Packages/PatchPackagesForDelphi.exe
 

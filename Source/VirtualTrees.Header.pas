@@ -330,6 +330,9 @@ type
     FOptions                     : TVTHeaderOptions;
     FStyle                       : TVTHeaderStyle; //button style
     FBackgroundColor             : TColor;
+  {$IFDEF VT_FMX}
+    FSeparatorColor              : TColor;
+  {$ENDIF}
     FAutoSizeIndex               : TColumnIndex;
     FPopupMenu                   : TPopupMenu;
     FMainColumn                  : TColumnIndex; //the column which holds the tree
@@ -352,6 +355,9 @@ type
     function IsFontStored: Boolean;
     procedure SetAutoSizeIndex(Value: TColumnIndex);
     procedure SetBackground(Value: TColor);
+  {$IFDEF VT_FMX}
+    procedure SetSeparatorColor(Value: TColor);
+  {$ENDIF}
     procedure SetColumns(Value: TVirtualTreeColumns);
     procedure SetDefaultHeight(Value: TDimension);
     procedure SetFont(const Value: TFont);
@@ -457,6 +463,12 @@ type
     property Options: TVTHeaderOptions read FOptions write SetOptions default [hoColumnResize, hoDrag, hoShowSortGlyphs];
     property ParentFont: Boolean read FParentFont write SetParentFont default True;
     property PopupMenu: TPopupMenu read FPopupMenu write FPopupMenu;
+  {$IFDEF VT_FMX}
+    // FMX only. Null (the default) paints the columns as buttons with 3D edges. Any other color
+    // paints them flat in Background, with a single separator line of this color between them,
+    // which suits a header in custom colors.
+    property SeparatorColor: TColor read FSeparatorColor write SetSeparatorColor default TAlphaColorRec.Null;
+  {$ENDIF}
     property SortColumn: TColumnIndex read FSortColumn write SetSortColumn default NoColumn;
     property SortDirection: TSortDirection read FSortDirection write SetSortDirection default sdAscending;
     property SplitterHitTolerance: TDimension read fSplitterHitTolerance write fSplitterHitTolerance{$IFDEF VT_VCL} default 8{$ENDIF}; // The area in pixels around a spliter which is sensitive for resizing
@@ -809,6 +821,9 @@ begin
   FFont.{$IFDEF VT_FMX}OnChanged{$ELSE}OnChange{$ENDIF} := FontChanged;
   FParentFont := True;
   FBackgroundColor := clBtnFace;
+{$IFDEF VT_FMX}
+  FSeparatorColor := TAlphaColorRec.Null;
+{$ENDIF}
   FOptions := [hoColumnResize, hoDrag, hoShowSortGlyphs];
 
   FImageChangeLink := TChangeLink.Create;
@@ -865,6 +880,10 @@ procedure TVTHeader.AutoScale();
 var
   I: Integer;
   lMaxHeight: TDimension;
+{$IFDEF VT_FMX}
+  lCanvas: TCanvas;
+  lSavedFont: TFont;
+{$ENDIF}
 begin
   if (toAutoChangeScale in TBaseVirtualTreeCracker(Tree).TreeOptions.AutoOptions) then
   begin
@@ -874,6 +893,23 @@ begin
     for I := 0 to Self.Columns.Count - 1 do
       lMaxHeight := Max(lMaxHeight, Columns[I].Spacing);
     //Calculate the required height based on the font, this is important as the user might just have increased the size of the system icon font.
+{$IFDEF VT_FMX}
+    // An empty FMX bitmap has no canvas on Android, so the shared measuring canvas is used.
+    // Its font is restored afterwards.
+    lCanvas := TCanvasManager.MeasureCanvas;
+    lSavedFont := TFont.Create;
+    try
+      lSavedFont.Assign(lCanvas.Font);
+      try
+        lCanvas.Font.Assign(FFont);
+        lMaxHeight := lMaxHeight {top spacing} + Divide(lMaxHeight, 2) {minimum bottom spacing} + lCanvas.TextHeight('Q');
+      finally
+        lCanvas.Font.Assign(lSavedFont);
+      end;
+    finally
+      lSavedFont.Free;
+    end;
+{$ELSE}
     with TBitmap.Create do
       try
         Canvas.Font.Assign(FFont);
@@ -881,6 +917,7 @@ begin
       finally
         Free;
       end;
+{$ENDIF}
     // Set the calculated size
     Self.SetHeight(lMaxHeight);
   end;
@@ -935,6 +972,19 @@ end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+{$IFDEF VT_FMX}
+procedure TVTHeader.SetSeparatorColor(Value: TColor);
+begin
+  if FSeparatorColor <> Value then
+  begin
+    FSeparatorColor := Value;
+    Invalidate(nil);
+  end;
+end;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+{$ENDIF}
 procedure TVTHeader.SetColumns(Value: TVirtualTreeColumns);
 
 begin
@@ -2582,6 +2632,9 @@ begin
   begin
     AutoSizeIndex := TVTHeader(Source).AutoSizeIndex;
     Background := TVTHeader(Source).Background;
+{$IFDEF VT_FMX}
+    SeparatorColor := TVTHeader(Source).SeparatorColor;
+{$ENDIF}
     Columns := TVTHeader(Source).Columns;
     Font := TVTHeader(Source).Font;
     FixedAreaConstraints.Assign(TVTHeader(Source).FixedAreaConstraints);
@@ -6177,17 +6230,40 @@ var
               end
               else
 {$ENDIF}
+{$IFDEF VT_FMX}
+              // There are no themes in FMX. The column face is Header.Background (DrawEdge would
+              // fill it with clBtnFace, hence BF_MIDDLE is removed from its flags below).
+              begin
+                TargetCanvas.Fill.Kind := TBrushKind.Solid;
+                TargetCanvas.Fill.Color := Header.Background;
+                TargetCanvas.FillRect(PaintRectangle, 0, 0, [], 1.0);
+              end;
+              if Header.SeparatorColor <> TAlphaColorRec.Null then
+              begin
+                // Flat: only a separator line at the right edge of the column.
+                if RightBorderFlag <> 0 then
+                begin
+                  TargetCanvas.Stroke.Kind := TBrushKind.Solid;
+                  TargetCanvas.Stroke.Color := Header.SeparatorColor;
+                  TargetCanvas.Stroke.Thickness := 1;
+                  TargetCanvas.DrawLine(TPointF.Create(PaintRectangle.Right - 0.5, PaintRectangle.Top + 3),
+                    TPointF.Create(PaintRectangle.Right - 0.5, PaintRectangle.Bottom - 3), 1.0);
+                end;
+              end
+              else
+{$ENDIF}
                 if IsDownIndex then
-                  DrawEdge(TargetCanvas{$IFDEF VT_VCL}.Handle{$ENDIF}, PaintRectangle, PressedButtonStyle, PressedButtonFlags)
+                  DrawEdge(TargetCanvas{$IFDEF VT_VCL}.Handle{$ENDIF}, PaintRectangle, PressedButtonStyle,
+                           PressedButtonFlags{$IFDEF VT_FMX} and not Cardinal(BF_MIDDLE){$ENDIF})
                 else
                   // Plates have the special case of raising on mouse over.
                   if (Header.Style = hsPlates) and IsHoverIndex and
                      (coAllowClick in FOptions) and (coEnabled in FOptions) then
                     DrawEdge(TargetCanvas{$IFDEF VT_VCL}.Handle{$ENDIF}, PaintRectangle, RaisedButtonStyle,
-                             RaisedButtonFlags or RightBorderFlag)
+                             (RaisedButtonFlags or RightBorderFlag){$IFDEF VT_FMX} and not Cardinal(BF_MIDDLE){$ENDIF})
                   else
                     DrawEdge(TargetCanvas{$IFDEF VT_VCL}.Handle{$ENDIF}, PaintRectangle, NormalButtonStyle,
-                             NormalButtonFlags or RightBorderFlag);
+                             (NormalButtonFlags or RightBorderFlag){$IFDEF VT_FMX} and not Cardinal(BF_MIDDLE){$ENDIF});
           end;
         end;
 

@@ -142,6 +142,6 @@ object FormMain: TFormMain
     RowSelect = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitTop = 111
+    ExplicitTop = 99
   end
 end

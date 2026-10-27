@@ -39,6 +39,8 @@ type
     FDottedBrushGridLines: TStrokeBrush;                  // used to paint dotted lines without special pens
     FInCreate: Boolean;
 
+    procedure ScrollBarApplyStyleLookup(Sender: TObject);
+    procedure UpdateThumbOverlay(AScrollBar: TScrollBar);
     function GetFillColor: TAlphaColor;
     procedure SetFillColor(const Value: TAlphaColor);
   protected
@@ -53,8 +55,10 @@ type
     FHScrollBar: TScrollBar;
     FVScrollBar: TScrollBar;
     FScrollBarSize: Single;
+    FScrollBarThumbColor: TAlphaColor;
     FUseRightToLeftAlignment: Boolean;
     procedure SetScrollBarSize(const Value: Single);
+    procedure SetScrollBarThumbColor(const Value: TAlphaColor);
 
     procedure SetBevelCut(Index: Integer; const Value: TBevelCut);
     procedure SetBevelEdges(const Value: TBevelEdges);
@@ -185,6 +189,13 @@ type
     /// that a desktop build looks the same as the device it is being tested for.
     /// </summary>
     property ScrollBarSize: Single read FScrollBarSize write SetScrollBarSize;
+    /// <summary>
+    /// Paints the thumb of both scrollbars in this color, on top of whatever the style draws.
+    /// Meant for styles where the thumb hardly stands out from the track. Null (the default)
+    /// leaves the style's own thumb alone. The scrollbars' OnApplyStyleLookup is used for
+    /// this, so an application must not assign its own handler to them.
+    /// </summary>
+    property ScrollBarThumbColor: TAlphaColor read FScrollBarThumbColor write SetScrollBarThumbColor;
     property HandleAllocated: Boolean read FHandleAllocated;
 
     /// <summary>
@@ -267,6 +278,11 @@ begin
 
   // Sets both bars' thickness and the corner margin between them.
   SetScrollBarSize(cDefaultScrollBarSize);
+
+  // Does nothing until ScrollBarThumbColor is set.
+  FScrollBarThumbColor:= TAlphaColorRec.Null;
+  FHScrollBar.OnApplyStyleLookup:= ScrollBarApplyStyleLookup;
+  FVScrollBar.OnApplyStyleLookup:= ScrollBarApplyStyleLookup;
 
   SetAcceptsControls(false);
 
@@ -437,6 +453,116 @@ end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+procedure TVTBaseAncestorFMX.SetScrollBarThumbColor(const Value: TAlphaColor);
+begin
+  if FScrollBarThumbColor = Value then
+    Exit;
+
+  FScrollBarThumbColor:= Value;
+  UpdateThumbOverlay(FVScrollBar);
+  UpdateThumbOverlay(FHScrollBar);
+end;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+procedure TVTBaseAncestorFMX.ScrollBarApplyStyleLookup(Sender: TObject);
+
+// A new style clone has a new thumb without the overlay.
+
+begin
+  if Sender is TScrollBar then
+    UpdateThumbOverlay(TScrollBar(Sender));
+end;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+procedure TVTBaseAncestorFMX.UpdateThumbOverlay(AScrollBar: TScrollBar);
+
+// Lays a rectangle in ScrollBarThumbColor over the scrollbar's thumb, or hides it again when
+// the color is Null.
+//
+// The thumb is searched for by class through all children rather than with
+// FindStyleResource('thumb'): in the scrollbar styles the thumb sits inside the track, and the
+// track is a styled control of its own, so a style name lookup from the scrollbar stops at the
+// track and never reaches the thumb. Styles also differ in how deep the thumb is nested.
+//
+// Called when the style is applied and from SetScrollInfo, since a thumb that a style creates
+// later (e.g. when the track applies its own style) can only be caught afterwards.
+
+const
+  cOverlayTag = 'VTThumbOverlay';
+
+  function FindThumb(AObject: TFmxObject): TControl;
+  var
+    I: Integer;
+  begin
+    if AObject is TThumb then
+      Exit(TControl(AObject));
+
+    for I:= 0 to AObject.ChildrenCount - 1 do
+      begin
+        Result:= FindThumb(AObject.Children[I]);
+        if Assigned(Result) then
+          Exit;
+      end;
+
+    Result:= nil;
+  end;
+
+var
+  Thumb: TControl;
+  Overlay: TRectangle;
+  I: Integer;
+begin
+  if not Assigned(AScrollBar) then
+    Exit;
+
+  Thumb:= FindThumb(AScrollBar);
+  if not Assigned(Thumb) then
+    Exit;
+
+  Overlay:= nil;
+  for I:= 0 to Thumb.ChildrenCount - 1 do
+    if (Thumb.Children[I] is TRectangle) and (TRectangle(Thumb.Children[I]).TagString = cOverlayTag) then
+      begin
+        Overlay:= TRectangle(Thumb.Children[I]);
+        Break;
+      end;
+
+  if FScrollBarThumbColor = TAlphaColorRec.Null then
+    begin
+      if Assigned(Overlay) then
+        Overlay.Visible:= False;
+      Exit;
+    end;
+
+  if not Assigned(Overlay) then
+    begin
+      Overlay:= TRectangle.Create(Thumb);
+      Overlay.TagString:= cOverlayTag;
+      Overlay.Parent:= Thumb;
+      Overlay.Stored:= False;
+      Overlay.Locked:= True;
+      Overlay.HitTest:= False;   // The thumb itself must still get the drag.
+      Overlay.Align:= TAlignLayout.Client;
+      Overlay.Margins.Left:= 2;
+      Overlay.Margins.Top:= 2;
+      Overlay.Margins.Right:= 2;
+      Overlay.Margins.Bottom:= 2;
+      Overlay.Stroke.Kind:= TBrushKind.None;
+      Overlay.Fill.Kind:= TBrushKind.Solid;
+      Overlay.XRadius:= 3;
+      Overlay.YRadius:= 3;
+    end;
+
+  Overlay.Fill.Color:= FScrollBarThumbColor;
+  Overlay.Visible:= True;
+  // Above anything the thumb's own style puts in later.
+  Overlay.BringToFront;
+end;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 function TVTBaseAncestorFMX.SetScrollInfo(Bar: Integer; const ScrollInfo: TScrollInfo; Redraw: Boolean): TDimension;
 
 // Maps the Win32 style TScrollInfo the tree works in onto an FMX TScrollBar.
@@ -489,6 +615,10 @@ begin
     begin
       ScrollBar.Value:= ScrollInfo.nPos;
     end;
+
+  // Catches a thumb that a style creates after the scrollbar's own style was applied.
+  if FScrollBarThumbColor<>TAlphaColorRec.Null then
+    UpdateThumbOverlay(ScrollBar);
 
   Result:= ScrollBar.Value;
 

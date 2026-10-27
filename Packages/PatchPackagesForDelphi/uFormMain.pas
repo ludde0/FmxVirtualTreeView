@@ -360,11 +360,12 @@ end;
 
 function VersionSymbolFor(const ASuffix: string): string;
 
-// RAD Studio numbers its packages and its compiler in step: library suffix 290 belongs to
-// CompilerVersion 36, which defines VER360; 280 belongs to 35 and VER350. Ten on the suffix is
-// one on the compiler version.
+// Up to RAD Studio 12 the library suffix ran seven behind the compiler version: suffix 290
+// belongs to CompilerVersion 36, which defines VER360; 280 belongs to 35 and VER350. RAD Studio
+// 13 closed that gap - its suffix is 370 and its symbol VER370 - so from 370 on the suffix and
+// the symbol carry the same number.
 //
-// If a future RAD Studio ever breaks that step, the symbol worked out here is wrong and
+// If a future RAD Studio breaks the pattern again, the symbol worked out here is wrong and
 // DelphiVersion.inc still refuses the build - which is the safe way round, and the file says
 // how to add the line by hand.
 
@@ -374,7 +375,11 @@ begin
   Result := '';
   if not TryStrToInt(ASuffix, LSuffix) then
     Exit;
-  Result := 'VER' + IntToStr(((LSuffix div 10) + 7) * 10);
+  if LSuffix >= 370 then begin
+    Result := 'VER' + IntToStr(LSuffix);
+  end else begin
+    Result := 'VER' + IntToStr(((LSuffix div 10) + 7) * 10);
+  end;
 end;
 
 //----------------------------------------------------------------------------------------------

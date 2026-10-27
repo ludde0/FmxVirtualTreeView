@@ -1,7 +1,7 @@
 # FmxVirtualTreeView
 
-Virtual TreeView for **Delphi 12**, buildable for both **VCL** and **FireMonkey** from one
-set of sources.
+Virtual TreeView for **Delphi 13** (and Delphi 12), buildable for both **VCL** and
+**FireMonkey** from one set of sources.
 
 ![FMX demo](FmxDemo.jpg)
 
@@ -31,6 +31,7 @@ not here — and if you merge it yourself, a pull request is welcome.
 This is a **working but incomplete** fork, maintained for my own applications. The VCL side is
 close to the upstream it was forked from; the FireMonkey side is a port that has been carried
 far enough to be useful on **Windows and Android**, and has had its first runs on macOS.
+It is developed with Delphi 13; it was developed with Delphi 12.1 until October 2026.
 
 | Platform                 | Framework | Status                                   |
 |--------------------------|-----------|------------------------------------------|
@@ -38,8 +39,8 @@ far enough to be useful on **Windows and Android**, and has had its first runs o
 | Windows 32/64-bit        | FMX       | Tested                                   |
 | Android 64-bit           | FMX       | Tested                                   |
 | macOS ARM 64-bit         | FMX       | Runs, basic testing only                 |
-| iOS Simulator ARM 64-bit | FMX       | Compiles and links, not yet run          |
-| iOS device               | FMX       | Not tested                               |
+| iOS Simulator ARM 64-bit | FMX       | Compiles and links (Delphi 12.1), not run |
+| iOS device               | FMX       | Compiles, does not link yet (see below)  |
 
 What is known to work under FMX: variable and multiline node heights, system and custom
 check boxes including tri-state, column headers with resizing and a built-in column popup,
@@ -50,6 +51,15 @@ context menu opened by right click or press and hold, and the usual painting opt
 What is missing or untested under FMX: OLE drag and drop, the clipboard, printing, iOS at
 run time, and accessibility. Several of these are Windows-only in the original design and
 would need real work rather than a port.
+
+### Building for iOS with Delphi 13
+
+Delphi 13 compiles the FMX demo for iOS Device 64-bit, but importing an iOS SDK from Xcode
+26.4 or later through the PAServer that ships with Delphi 13.1 produces an SDK whose libraries
+are empty files, and every link then stops with `E2597 ld: file too small (length=0) for
+architecture arm64`. The fault is in the imported SDK, not in this code. Embarcadero's May
+2026 patch for 13.1 is reported to include a PAServer that imports correctly; without it,
+import the SDK from Xcode 26.3 or earlier.
 
 ### Building for macOS and iOS with Delphi 12.1
 
@@ -67,11 +77,13 @@ than in this code:
 
 ## Requirements
 
-RAD Studio / Delphi 12. Nothing else; there are no external dependencies.
+RAD Studio / Delphi 13 or 12. Nothing else; there are no external dependencies.
 
-The packages are pinned to Delphi 12's library suffix and will refuse to compile under any
-other RAD Studio, with a message saying what to do about it. To build them with a newer
-Delphi, read `Packages\README FIRST - OTHER DELPHI VERSIONS.txt` — it is one tool run.
+The packages are set to Delphi 13's library suffix and will refuse to compile under any
+other RAD Studio, with a message saying what to do about it. To build them with Delphi 12 or
+another version, read `Packages\README FIRST - OTHER DELPHI VERSIONS.txt` — it is one tool
+run. The source itself needs nothing: the demos and your own projects compile with either
+version as they are.
 
 Only one framework can be *installed* in the IDE at a time — the VCL design package and the
 FMX design package register components of the same names. You can install one and still
